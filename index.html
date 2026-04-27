@@ -7,31 +7,44 @@
     <style>
         :root { --primary: #6c5ce7; --accent: #ff4757; --bg: #f0f2f5; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; }
-        .app-container { max-width: 480px; width: 100%; min-height: 100vh; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.1); padding: 40px 20px; box-sizing: border-box; }
+        .app-container { max-width: 480px; width: 100%; min-height: 100vh; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.1); padding: 40px 20px; box-sizing: border-box; position: relative; }
         
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; margin-bottom: 10px; }
+        h1 { text-align: center; margin-bottom: 40px; }
+        button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
         .btn-shout { background: var(--primary); color: white; }
+        .btn-shout:active { transform: scale(0.98); }
         input { width: 100%; padding: 15px; margin-bottom: 15px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; }
 
+        /* TMDB 결과 */
         .tmdb-results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; }
-        .tmdb-item { cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; background: #f8f9fa; }
+        .tmdb-item { cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; background: #f8f9fa; text-align: center; }
         .tmdb-item.selected { border-color: var(--accent); background: #fff1f2; }
-        .tmdb-item img { width: 100%; height: 120px; object-fit: cover; }
-        .tmdb-item p { font-size: 11px; padding: 5px; margin: 0; text-align: center; }
+        .tmdb-item img { width: 100%; height: 150px; object-fit: cover; }
+        .tmdb-item p { font-size: 11px; padding: 5px; margin: 0; }
 
-        .actor-card { background: #f1f0ff; color: var(--primary); padding: 20px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        /* 배우 카드 */
+        .actor-card { background: #f1f0ff; color: var(--primary); padding: 20px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        
+        /* 결과 화면 포스트잇/카드 스타일 */
+        .work-cloud-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; margin-bottom: 20px; }
+        .work-cloud-item img { border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 5px; }
+
         .back-link { color: #888; cursor: pointer; text-decoration: underline; margin-bottom: 20px; display: inline-block; }
+        
+        /* 모달 */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 80%; max-width: 350px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div id="screen-main" class="screen active">
-        <h1 style="text-align: center;">📣 외쳐라! <br>이 배우 이 작품</h1>
+        <h1>📣 외쳐라!<br>이 배우 이 작품</h1>
         <button class="btn-shout" onclick="goScreen('screen-actor-search')">입덕작 외치기</button>
         <button style="background:#eee;" onclick="initListPage()">입덕작 확인</button>
     </div>
@@ -46,9 +59,8 @@
 
     <div id="screen-work-search" class="screen">
         <span class="back-link" onclick="goScreen('screen-actor-search')">뒤로가기</span>
-        <h2 id="display-actor-name" class="highlight"></h2>
-        <p>이 배우의 입덕 작품을 검색하세요.</p>
-        <input type="text" id="workSearchInput" placeholder="작품명(영화 또는 드라마)">
+        <h2 id="display-actor-name"></h2>
+        <input type="text" id="workSearchInput" placeholder="작품명 검색 (영화/드라마)">
         <button class="btn-shout" onclick="searchTMDB()">작품 찾기</button>
         <div id="tmdb-results" class="tmdb-results"></div>
         
@@ -58,12 +70,32 @@
         </div>
     </div>
 
-    <div id="screen-list" class="screen">... (배우 목록) ...</div>
+    <div id="screen-list" class="screen">
+        <span class="back-link" onclick="goScreen('screen-main')">홈으로</span>
+        <h2>누구의 입덕작을 볼까요?</h2>
+        <div id="actor-list-area"></div>
+    </div>
+
+    <div id="screen-result" class="screen">
+        <span class="back-link" onclick="goScreen('screen-list')">목록으로</span>
+        <h2 id="result-actor-name"></h2>
+        <div id="cloud-area" style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;"></div>
+    </div>
+</div>
+
+<div id="modal" class="modal" onclick="this.style.display='none'">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 id="modal-title"></h3>
+        <div id="modal-reasons"></div>
+        <button onclick="document.getElementById('modal').style.display='none'">닫기</button>
+    </div>
 </div>
 
 <script>
-    const TMDB_API_KEY = 'bafae8be027059fc5d4088e658d7a71c'; // TMDB API 키 입력 필요
-    let db = {}; 
+    const TMDB_API_KEY = 'bafae8be027059fc5d4088e658d7a71c'; // 본인의 키를 입력하세요
+    let db = {
+        "장청": { "일야부심": { count: 3, poster: "https://via.placeholder.com/200x300", reasons: ["눈빛 대박"] } }
+    }; 
     let currentActor = "";
     let selectedWork = null;
 
@@ -72,91 +104,97 @@
         document.getElementById(id).classList.add('active');
     }
 
-    // [로직 1] 배우 검색
+    // 배우 검색 로직
     function searchActor() {
         const name = document.getElementById('actorInput').value.trim();
         if(!name) return;
-        
         currentActor = name;
-        const resultArea = document.getElementById('actor-search-result');
-        
-        if(db[name]) {
-            resultArea.innerHTML = `<div class="actor-card" onclick="goToWorkSearch()">"${name}" 배우님 찾음! (클릭해서 계속)</div>`;
-        } else {
-            resultArea.innerHTML = `
-                <p style="text-align:center; color:#666;">아직 등록되지 않은 배우입니다.</p>
-                <button class="btn-shout" onclick="goToWorkSearch()">"${name}" 직접 추가하고 계속하기</button>
-            `;
-        }
+        const resArea = document.getElementById('actor-search-result');
+        resArea.innerHTML = `<div class="actor-card" onclick="goToWorkSearch()">"${name}" 배우님 선택 (클릭해서 계속)</div>`;
     }
 
     function goToWorkSearch() {
         document.getElementById('display-actor-name').innerText = `✨ ${currentActor}`;
-        // 배우 검색 창 초기화
-        document.getElementById('tmdb-results').innerHTML = "";
-        document.getElementById('final-input-area').style.display = 'none';
         goScreen('screen-work-search');
     }
 
-    // [로직 2] 작품 검색 (TMDB)
+    // TMDB 작품 검색
     async function searchTMDB() {
         const query = document.getElementById('workSearchInput').value.trim();
         if(!query) return;
-
         const url = `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=ko-KR`;
-        
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            renderTMDBResults(data.results);
-        } catch (error) {
-            alert("작품 검색 중 오류가 발생했습니다.");
-        }
-    }
-
-    function renderTMDBResults(results) {
+        const res = await fetch(url);
+        const data = await res.json();
         const area = document.getElementById('tmdb-results');
         area.innerHTML = "";
-        results.forEach(item => {
-            if(!item.title && !item.name) return;
+        data.results.forEach(item => {
+            if(!item.poster_path) return;
             const title = item.title || item.name;
-            const poster = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Image';
-            
+            const poster = `https://image.tmdb.org/t/p/w200${item.poster_path}`;
             const div = document.createElement('div');
             div.className = 'tmdb-item';
             div.innerHTML = `<img src="${poster}"><p>${title}</p>`;
             div.onclick = () => {
-                // 선택 시각화
-                document.querySelectorAll('.tmdb-item').forEach(el => el.classList.remove('selected'));
-                div.classList.add('selected');
                 selectedWork = { title, poster };
+                document.querySelectorAll('.tmdb-item').forEach(i => i.classList.remove('selected'));
+                div.classList.add('selected');
                 document.getElementById('final-input-area').style.display = 'block';
             };
             area.appendChild(div);
         });
     }
 
-    // [로직 3] 최종 저장
     function handleShout() {
-        const reason = document.getElementById('reasonInput').value.trim();
-        
+        const reason = document.getElementById('reasonInput').value;
         if(!db[currentActor]) db[currentActor] = {};
         if(!db[currentActor][selectedWork.title]) {
-            db[currentActor][selectedWork.title] = { count: 0, poster: selectedWork.poster, reasons: [], tags: [] };
+            db[currentActor][selectedWork.title] = { count: 0, poster: selectedWork.poster, reasons: [] };
         }
-
         db[currentActor][selectedWork.title].count++;
         if(reason) db[currentActor][selectedWork.title].reasons.push(reason);
-
-        alert(`${currentActor} 배우의 입덕작 "${selectedWork.title}" 외치기 완료!`);
-        
-        // 초기화 및 메인 이동
-        document.getElementById('actorInput').value = "";
-        document.getElementById('workSearchInput').value = "";
-        document.getElementById('reasonInput').value = "";
+        alert("외치기 완료!");
         goScreen('screen-main');
     }
-</script>
 
+    // [중요] 입덕작 확인 버튼 클릭 시 실행되는 함수
+    function initListPage() {
+        const area = document.getElementById('actor-list-area');
+        area.innerHTML = "";
+        const actors = Object.keys(db);
+        if(actors.length === 0) {
+            area.innerHTML = "<p>아직 등록된 배우가 없습니다.</p>";
+        } else {
+            actors.forEach(name => {
+                const div = document.createElement('div');
+                div.className = 'actor-card';
+                div.innerText = name;
+                div.onclick = () => showCloud(name);
+                area.appendChild(div);
+            });
+        }
+        goScreen('screen-list'); // 화면 전환 명령
+    }
+
+    function showCloud(name) {
+        document.getElementById('result-actor-name').innerText = `${name}의 입덕작`;
+        const area = document.getElementById('cloud-area');
+        area.innerHTML = "";
+        const works = db[name];
+        Object.keys(works).forEach(title => {
+            const data = works[title];
+            const div = document.createElement('div');
+            div.className = 'work-cloud-item';
+            const size = 120 + (data.count * 20); // 횟수별 크기 차등
+            div.innerHTML = `<img src="${data.poster}" width="${size}"><div style="font-weight:bold;">${title}</div>`;
+            div.onclick = () => {
+                document.getElementById('modal').style.display = 'flex';
+                document.getElementById('modal-title').innerText = title;
+                document.getElementById('modal-reasons').innerHTML = data.reasons.map(r => `<div>💬 ${r}</div>`).join('');
+            };
+            area.appendChild(div);
+        });
+        goScreen('screen-result');
+    }
+</script>
 </body>
 </html>
