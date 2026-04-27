@@ -6,38 +6,33 @@
     <title>외쳐라! 이 배우 이 작품</title>
     <style>
         :root { --primary: #6c5ce7; --accent: #ff4757; --bg: #f0f2f5; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; overflow-x: hidden; }
         .app-container { max-width: 480px; width: 100%; min-height: 100vh; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.1); padding: 40px 20px; box-sizing: border-box; position: relative; }
         
         .screen { display: none; animation: fadeIn 0.3s ease; }
         .screen.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        h1 { text-align: center; margin-bottom: 40px; }
-        button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
+        button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; margin-bottom: 10px; }
         .btn-shout { background: var(--primary); color: white; }
-        .btn-shout:active { transform: scale(0.98); }
         input { width: 100%; padding: 15px; margin-bottom: 15px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; }
 
-        /* TMDB 결과 */
-        .tmdb-results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; }
-        .tmdb-item { cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; background: #f8f9fa; text-align: center; }
-        .tmdb-item.selected { border-color: var(--accent); background: #fff1f2; }
-        .tmdb-item img { width: 100%; height: 150px; object-fit: cover; }
-        .tmdb-item p { font-size: 11px; padding: 5px; margin: 0; }
+        /* 해시태그 선택기 */
+        .tag-selector { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .tag-chip { padding: 8px 15px; border: 1px solid #ddd; border-radius: 20px; font-size: 0.9rem; cursor: pointer; background: white; }
+        .tag-chip.selected { background: var(--primary); color: white; border-color: var(--primary); }
 
-        /* 배우 카드 */
-        .actor-card { background: #f1f0ff; color: var(--primary); padding: 20px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-        
-        /* 결과 화면 포스트잇/카드 스타일 */
-        .work-cloud-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; margin-bottom: 20px; }
-        .work-cloud-item img { border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 5px; }
+        /* 테마 화면용 플로팅 버튼 */
+        .floating-btn { position: fixed; bottom: 30px; right: calc(50% - 220px); width: 60px; height: 60px; border-radius: 30px; background: var(--accent); color: white; font-size: 24px; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; border: none; }
+        @media (max-width: 480px) { .floating-btn { right: 20px; } }
+
+        .theme-item { background: #fff; border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .tmdb-results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 250px; overflow-y: auto; margin-bottom: 15px; }
+        .tmdb-item { border-radius: 8px; overflow: hidden; background: #f8f9fa; cursor: pointer; border: 2px solid transparent; text-align: center; font-size: 11px; }
+        .tmdb-item.selected { border-color: var(--accent); }
+        .tmdb-item img { width: 100%; height: 120px; object-fit: cover; }
 
         .back-link { color: #888; cursor: pointer; text-decoration: underline; margin-bottom: 20px; display: inline-block; }
-        
-        /* 모달 */
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 80%; max-width: 350px; }
     </style>
 </head>
 <body>
@@ -47,86 +42,101 @@
         <h1>📣 외쳐라!<br>이 배우 이 작품</h1>
         <button class="btn-shout" onclick="goScreen('screen-actor-search')">입덕작 외치기</button>
         <button style="background:#eee;" onclick="initListPage()">입덕작 확인</button>
+        <button style="background:#dfe6e9;" onclick="goScreen('screen-theme-list')">📂 테마별 추천작</button>
     </div>
 
     <div id="screen-actor-search" class="screen">
-        <span class="back-link" onclick="goScreen('screen-main')">홈으로</span>
-        <h2>먼저, 배우를 찾으세요</h2>
-        <input type="text" id="actorInput" placeholder="배우 이름을 입력하세요">
-        <button class="btn-shout" onclick="searchActor()">배우 확인</button>
-        <div id="actor-search-result"></div>
+        <span class="back-link" onclick="cancelAndGoHome()">취소하고 홈으로</span>
+        <h2>배우 검색</h2>
+        <input type="text" id="actorInput" placeholder="배우 이름">
+        <button class="btn-shout" onclick="confirmActor()">확인</button>
     </div>
 
     <div id="screen-work-search" class="screen">
-        <span class="back-link" onclick="goScreen('screen-actor-search')">뒤로가기</span>
-        <h2 id="display-actor-name"></h2>
-        <input type="text" id="workSearchInput" placeholder="작품명 검색 (영화/드라마)">
-        <button class="btn-shout" onclick="searchTMDB()">작품 찾기</button>
+        <span class="back-link" onclick="cancelAndGoHome()">취소</span>
+        <h2 id="current-target"></h2>
+        <input type="text" id="workSearchInput" placeholder="작품명 검색">
+        <button class="btn-shout" onclick="searchTMDB('work')">검색</button>
         <div id="tmdb-results" class="tmdb-results"></div>
         
-        <div id="final-input-area" style="display:none;">
-            <input type="text" id="reasonInput" maxlength="25" placeholder="추천 이유 (20자 내외)">
-            <button class="btn-shout" style="background: var(--accent);" onclick="handleShout()">최종 외치기!!!</button>
+        <div id="tag-area" style="display:none;">
+            <p>매력 포인트를 선택하세요 (최대 2개)</p>
+            <div class="tag-selector" id="tag-selector">
+                <div class="tag-chip" onclick="toggleTag(this)">#눈빛맛집</div>
+                <div class="tag-chip" onclick="toggleTag(this)">#서사천재</div>
+                <div class="tag-chip" onclick="toggleTag(this)">#연기천재</div>
+                <div class="tag-chip" onclick="toggleTag(this)">#비주얼끝판왕</div>
+                <div class="tag-chip" onclick="toggleTag(this)">#케미요정</div>
+            </div>
+            <button class="btn-shout" style="background:var(--accent)" onclick="saveShout()">외치기 완료</button>
         </div>
     </div>
 
-    <div id="screen-list" class="screen">
+    <div id="screen-theme-list" class="screen">
         <span class="back-link" onclick="goScreen('screen-main')">홈으로</span>
-        <h2>누구의 입덕작을 볼까요?</h2>
-        <div id="actor-list-area"></div>
+        <h2>테마별 추천작</h2>
+        <div id="theme-display-area"></div>
+        <button class="floating-btn" onclick="goScreen('screen-theme-write')">+</button>
     </div>
 
-    <div id="screen-result" class="screen">
-        <span class="back-link" onclick="goScreen('screen-list')">목록으로</span>
-        <h2 id="result-actor-name"></h2>
-        <div id="cloud-area" style="display:flex; flex-wrap:wrap; justify-content:center; gap:15px;"></div>
+    <div id="screen-theme-write" class="screen">
+        <span class="back-link" onclick="cancelAndGoHome()">취소</span>
+        <h2>테마 만들기</h2>
+        <input type="text" id="themeNameInput" placeholder="테마 이름 (예: 비오는 날 보기 좋은)">
+        <input type="text" id="themeWorkSearch" placeholder="작품 검색">
+        <button class="btn-shout" onclick="searchTMDB('theme')">작품 찾기</button>
+        <div id="theme-tmdb-results" class="tmdb-results"></div>
+        <div id="theme-save-area" style="display:none;">
+            <button class="btn-shout" onclick="saveTheme()">테마 저장하기</button>
+        </div>
     </div>
-</div>
 
-<div id="modal" class="modal" onclick="this.style.display='none'">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 id="modal-title"></h3>
-        <div id="modal-reasons"></div>
-        <button onclick="document.getElementById('modal').style.display='none'">닫기</button>
     </div>
-</div>
 
 <script>
-    const TMDB_API_KEY = 'bafae8be027059fc5d4088e658d7a71c'; // 본인의 키를 입력하세요
-    let db = {
-        "장청": { "일야부심": { count: 3, poster: "https://via.placeholder.com/200x300", reasons: ["눈빛 대박"] } }
-    }; 
-    let currentActor = "";
-    let selectedWork = null;
+    const TMDB_API_KEY = 'bafae8be027059fc5d4088e658d7a71c'; 
+    let db = {}; 
+    let themes = [];
+    let tempEntry = { actor: '', work: null, tags: [] };
 
     function goScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
-    // 배우 검색 로직
-    function searchActor() {
-        const name = document.getElementById('actorInput').value.trim();
-        if(!name) return;
-        currentActor = name;
-        const resArea = document.getElementById('actor-search-result');
-        resArea.innerHTML = `<div class="actor-card" onclick="goToWorkSearch()">"${name}" 배우님 선택 (클릭해서 계속)</div>`;
+    // [중요] 모든 입력 리셋
+    function clearInputs() {
+        document.querySelectorAll('input').forEach(i => i.value = "");
+        document.querySelectorAll('.tmdb-results').forEach(r => r.innerHTML = "");
+        document.querySelectorAll('.tag-chip').forEach(t => t.classList.remove('selected'));
+        document.getElementById('tag-area').style.display = 'none';
+        document.getElementById('theme-save-area').style.display = 'none';
+        tempEntry = { actor: '', work: null, tags: [] };
     }
 
-    function goToWorkSearch() {
-        document.getElementById('display-actor-name').innerText = `✨ ${currentActor}`;
+    function cancelAndGoHome() {
+        clearInputs();
+        goScreen('screen-main');
+    }
+
+    function confirmActor() {
+        const val = document.getElementById('actorInput').value.trim();
+        if(!val) return;
+        tempEntry.actor = val;
+        document.getElementById('current-target').innerText = `✨ ${val}`;
         goScreen('screen-work-search');
     }
 
-    // TMDB 작품 검색
-    async function searchTMDB() {
-        const query = document.getElementById('workSearchInput').value.trim();
+    async function searchTMDB(type) {
+        const query = type === 'work' ? document.getElementById('workSearchInput').value : document.getElementById('themeWorkSearch').value;
         if(!query) return;
-        const url = `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=ko-KR`;
-        const res = await fetch(url);
+        const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=ko-KR`);
         const data = await res.json();
-        const area = document.getElementById('tmdb-results');
+        
+        const areaId = type === 'work' ? 'tmdb-results' : 'theme-tmdb-results';
+        const area = document.getElementById(areaId);
         area.innerHTML = "";
+        
         data.results.forEach(item => {
             if(!item.poster_path) return;
             const title = item.title || item.name;
@@ -135,65 +145,52 @@
             div.className = 'tmdb-item';
             div.innerHTML = `<img src="${poster}"><p>${title}</p>`;
             div.onclick = () => {
-                selectedWork = { title, poster };
+                tempEntry.work = { title, poster };
                 document.querySelectorAll('.tmdb-item').forEach(i => i.classList.remove('selected'));
                 div.classList.add('selected');
-                document.getElementById('final-input-area').style.display = 'block';
+                document.getElementById(type === 'work' ? 'tag-area' : 'theme-save-area').style.display = 'block';
             };
             area.appendChild(div);
         });
     }
 
-    function handleShout() {
-        const reason = document.getElementById('reasonInput').value;
-        if(!db[currentActor]) db[currentActor] = {};
-        if(!db[currentActor][selectedWork.title]) {
-            db[currentActor][selectedWork.title] = { count: 0, poster: selectedWork.poster, reasons: [] };
-        }
-        db[currentActor][selectedWork.title].count++;
-        if(reason) db[currentActor][selectedWork.title].reasons.push(reason);
-        alert("외치기 완료!");
-        goScreen('screen-main');
-    }
-
-    // [중요] 입덕작 확인 버튼 클릭 시 실행되는 함수
-    function initListPage() {
-        const area = document.getElementById('actor-list-area');
-        area.innerHTML = "";
-        const actors = Object.keys(db);
-        if(actors.length === 0) {
-            area.innerHTML = "<p>아직 등록된 배우가 없습니다.</p>";
+    function toggleTag(el) {
+        if(el.classList.contains('selected')) {
+            el.classList.remove('selected');
         } else {
-            actors.forEach(name => {
-                const div = document.createElement('div');
-                div.className = 'actor-card';
-                div.innerText = name;
-                div.onclick = () => showCloud(name);
-                area.appendChild(div);
-            });
+            const selectedCount = document.querySelectorAll('.tag-selector .selected').length;
+            if(selectedCount < 2) el.classList.add('selected');
+            else alert("태그는 최대 2개까지 선택 가능합니다.");
         }
-        goScreen('screen-list'); // 화면 전환 명령
     }
 
-    function showCloud(name) {
-        document.getElementById('result-actor-name').innerText = `${name}의 입덕작`;
-        const area = document.getElementById('cloud-area');
-        area.innerHTML = "";
-        const works = db[name];
-        Object.keys(works).forEach(title => {
-            const data = works[title];
-            const div = document.createElement('div');
-            div.className = 'work-cloud-item';
-            const size = 120 + (data.count * 20); // 횟수별 크기 차등
-            div.innerHTML = `<img src="${data.poster}" width="${size}"><div style="font-weight:bold;">${title}</div>`;
-            div.onclick = () => {
-                document.getElementById('modal').style.display = 'flex';
-                document.getElementById('modal-title').innerText = title;
-                document.getElementById('modal-reasons').innerHTML = data.reasons.map(r => `<div>💬 ${r}</div>`).join('');
-            };
-            area.appendChild(div);
-        });
-        goScreen('screen-result');
+    function saveShout() {
+        const selectedTags = Array.from(document.querySelectorAll('.tag-selector .selected')).map(t => t.innerText);
+        const { actor, work } = tempEntry;
+        
+        if(!db[actor]) db[actor] = {};
+        if(!db[actor][work.title]) db[actor][work.title] = { count: 0, poster: work.poster, tags: [] };
+        
+        db[actor][work.title].count++;
+        db[actor][work.title].tags = [...new Set([...db[actor][work.title].tags, ...selectedTags])];
+        
+        alert("외치기 완료!");
+        cancelAndGoHome();
+    }
+
+    function saveTheme() {
+        const tName = document.getElementById('themeNameInput').value;
+        if(!tName || !tempEntry.work) return;
+        
+        themes.push({ name: tName, work: tempEntry.work.title });
+        renderThemes();
+        alert("테마 저장 완료!");
+        cancelAndGoHome();
+    }
+
+    function renderThemes() {
+        const area = document.getElementById('theme-display-area');
+        area.innerHTML = themes.map(t => `<div class="theme-item"><strong># ${t.name}</strong><br>ㄴ 추천작: ${t.work}</div>`).join('');
     }
 </script>
 </body>
