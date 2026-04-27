@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>외쳐라! 이 배우 이 작품</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --accent: #ff4757;
+            --bg: #f0f2f5;
+        }
+
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; }
+        .app-container { max-width: 480px; width: 100%; min-height: 100vh; background: white; box-shadow: 0 0 30px rgba(0,0,0,0.1); padding: 40px 20px; box-sizing: border-box; }
+        
+        .screen { display: none; animation: fadeIn 0.4s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 800; cursor: pointer; margin-bottom: 10px; }
+        .btn-shout { background: var(--primary); color: white; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; }
+
+        /* 검색 결과 스타일 */
+        .tmdb-results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; }
+        .tmdb-item { cursor: pointer; border: 2px solid transparent; border-radius: 8px; overflow: hidden; background: #f8f9fa; }
+        .tmdb-item:hover { border-color: var(--primary); }
+        .tmdb-item img { width: 100%; height: 120px; object-fit: cover; }
+        .tmdb-item p { font-size: 11px; padding: 5px; margin: 0; text-align: center; }
+
+        /* 입덕작 클라우드 카드 */
+        .work-card {
+            display: flex; flex-direction: column; align-items: center; cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .work-card img { border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 8px; }
+        .work-info { text-align: center; font-weight: bold; }
+        
+        .back-link { color: #888; cursor: pointer; text-decoration: underline; margin-bottom: 20px; display: inline-block; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div id="screen-main" class="screen active">
+        <h1 style="text-align: center;">📣 외쳐라! <br>이 배우 이 작품</h1>
+        <button class="btn-shout" onclick="goScreen('screen-search')">입덕작 외치기</button>
+        <button style="background:#eee;" onclick="initListPage()">입덕작 확인</button>
+    </div>
+
+    <div id="screen-search" class="screen">
+        <span class="back-link" onclick="goScreen('screen-main')">홈으로</span>
+        <h2 id="target-actor-title">배우 이름</h2>
+        <input type="text" id="workSearchInput" placeholder="작품명을 검색하세요 (영화/드라마)">
+        <button class="btn-shout" onclick="searchTMDB()">작품 검색</button>
+        <div id="tmdb-results" class="tmdb-results"></div>
+        
+        <div id="selected-work-area" style="display:none; text-align: center; margin-bottom: 20px;">
+            <p>선택된 작품: <strong id="selected-title"></strong></p>
+            <input type="text" id="reasonInput" maxlength="25" placeholder="추천 이유 (20자 내외)">
+            <button class="btn-shout" onclick="handleShout()">이걸로 외치기!!!</button>
+        </div>
+    </div>
+
+    <div id="screen-list" class="screen">
+        <span class="back-link" onclick="goScreen('screen-main')">홈으로</span>
+        <h2>누구의 입덕작을 볼까요?</h2>
+        <div id="actor-list-area"></div>
+    </div>
+
+    <div id="screen-result" class="screen">
+        <span class="back-link" onclick="goScreen('screen-list')">목록으로</span>
+        <h2 id="result-actor-name"></h2>
+        <div id="cloud-area" style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;"></div>
+    </div>
+</div>
+
+<script>
+    const TMDB_API_KEY = 'YOUR_API_KEY'; // 본인의 TMDB API 키를 입력하세요
+    let db = {}; 
+    let currentActor = "배우 검색 기능 필요"; // 실제 구현시 이전 단계에서 받아옴
+    let selectedWork = null;
+
+    function goScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    // 1. TMDB 작품 검색
+    async function searchTMDB() {
+        const query = document.getElementById('workSearchInput').value;
+        if(!query) return;
+
+        const url = `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=ko-KR`;
+        
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            renderSearchResults(data.results);
+        } catch (error) {
+            alert("API 호출 오류가 발생했습니다.");
+        }
+    }
+
+    function renderSearchResults(results) {
+        const area = document.getElementById('tmdb-results');
+        area.innerHTML = "";
+        results.forEach(item => {
+            if(!item.title && !item.name) return;
+            const title = item.title || item.name;
+            const poster = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : 'https://via.placeholder.com/200x300?text=No+Image';
+            
+            const div = document.createElement('div');
+            div.className = 'tmdb-item';
+            div.onclick = () => selectWork(title, poster);
+            div.innerHTML = `<img src="${poster}"><p>${title}</p>`;
+            area.appendChild(div);
+        });
+    }
+
+    function selectWork(title, poster) {
+        selectedWork = { title, poster };
+        document.getElementById('selected-title').innerText = title;
+        document.getElementById('selected-work-area').style.display = 'block';
+    }
+
+    // 2. 외치기 저장
+    function handleShout() {
+        const actor = prompt("배우 이름을 입력하세요 (이전 단계 연동 전 임시)");
+        const reason = document.getElementById('reasonInput').value;
+        if(!actor) return;
+
+        if(!db[actor]) db[actor] = {};
+        if(!db[actor][selectedWork.title]) {
+            db[actor][selectedWork.title] = { count: 0, poster: selectedWork.poster, reasons: [] };
+        }
+
+        db[actor][selectedWork.title].count++;
+        if(reason) db[actor][selectedWork.title].reasons.push(reason);
+
+        alert("외치기 성공!");
+        goScreen('screen-main');
+    }
+
+    // 3. 결과 화면 렌더링
+    function initListPage() {
+        const area = document.getElementById('actor-list-area');
+        area.innerHTML = "";
+        Object.keys(db).forEach(actor => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-shout';
+            btn.style.background = '#f1f0ff'; btn.style.color = 'var(--primary)';
+            btn.innerText = actor;
+            btn.onclick = () => showCloud(actor);
+            area.appendChild(btn);
+        });
+        goScreen('screen-list');
+    }
+
+    function showCloud(actor) {
+        document.getElementById('result-actor-name').innerText = `${actor}의 입덕작`;
+        const area = document.getElementById('cloud-area');
+        area.innerHTML = "";
+
+        const works = db[actor];
+        Object.keys(works).forEach(title => {
+            const data = works[title];
+            const size = 100 + (data.count * 20); // 횟수에 따른 포스터 크기 차등
+
+            const card = document.createElement('div');
+            card.className = 'work-card';
+            card.innerHTML = `
+                <img src="${data.poster}" width="${size}" style="max-width:200px;">
+                <div class="work-info">${title} (${data.count}dB)</div>
+            `;
+            area.appendChild(card);
+        });
+        goScreen('screen-result');
+    }
+</script>
+
+</body>
+</html>
