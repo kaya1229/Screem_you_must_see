@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>덕질 기록소 : 몽글</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nanum+Square+Round:wght@400;700;800&display=swap');
         
@@ -56,6 +57,9 @@
             cursor: pointer;
             transition: all 0.3s;
             font-family: 'Nanum Square Round', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         button:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
         
@@ -105,16 +109,16 @@
         .tmdb-item img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; }
         .tmdb-item p { padding: 12px; margin: 0; font-size: 0.9rem; font-weight: 700; text-align: center; }
 
-        /* 입덕 클라우드 (워드클라우드 스타일) */
+        /* 입덕 클라우드 */
         .record-cloud { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 35px; justify-content: center; padding: 40px 0; }
-        .cloud-item { position: relative; transition: 0.3s; }
+        .cloud-item { position: relative; transition: 0.3s; text-align: center; }
         .cloud-item img { border-radius: 30px; border: 6px solid #fff; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
         .cloud-item .badge {
             position: absolute; top: -15px; right: -15px;
             background: var(--sub); color: white;
             border-radius: 50%; width: 42px; height: 42px;
             display: flex; align-items: center; justify-content: center;
-            font-weight: 800; border: 4px solid white;
+            font-weight: 800; border: 4px solid white; z-index: 10;
         }
 
         /* 테마 카드 */
@@ -136,7 +140,7 @@
         <h1>✨ 몽글몽글<br>우리의 덕질 저장소</h1>
         <div style="display: grid; gap: 15px; max-width: 320px; margin: 0 auto;">
             <button class="btn-main" onclick="initListPage()">입덕작 확인하기</button>
-            <button class="btn-gray" onclick="goScreen('screen-theme-list')">📂 테마별 추천 확인</button>
+            <button class="btn-gray" onclick="goScreen('screen-theme-list'); loadThemes();">📂 테마별 추천 확인</button>
         </div>
     </div>
 
@@ -162,7 +166,7 @@
         <h2 id="current-target" style="color: var(--main);"></h2>
         <div style="display:flex; gap:10px;">
             <input type="text" id="workSearchInput" placeholder="입덕하게 된 작품명을 검색하세요" style="margin:0;">
-            <button onclick="searchTMDB('work')" style="background:var(--text); color:white; border-radius:22px; width:100px;">검색</button>
+            <button onclick="searchTMDB('work')" style="background:var(--text); color:white; border-radius:22px; width:70px; font-size:1.5rem;">🔍</button>
         </div>
         <div id="tmdb-results" class="tmdb-results"></div>
         
@@ -177,7 +181,7 @@
             </div>
             <div style="display:flex; gap:10px; margin-bottom: 20px;">
                 <input type="text" id="customTagWork" placeholder="나만의 태그 입력" style="margin:0; flex:1;">
-                <button onclick="addCustomTag('work')" style="background:#bbb; color:white; border-radius:20px;">추가</button>
+                <button onclick="addCustomTag('work')" style="background:#bbb; color:white; border-radius:20px; padding: 10px 20px;">추가</button>
             </div>
             <button class="btn-main" style="background:var(--sub)" onclick="saveShout()">입덕 외치기 완료 ✨</button>
         </div>
@@ -202,7 +206,7 @@
             <h3 style="margin-top:0;">작품 추가하기</h3>
             <div style="display:flex; gap:10px;">
                 <input type="text" id="themeWorkSearch" placeholder="작품 검색" style="margin:0;">
-                <button onclick="searchTMDB('theme')" style="background:var(--text); color:white; border-radius:22px; width:80px;">검색</button>
+                <button onclick="searchTMDB('theme')" style="background:var(--text); color:white; border-radius:22px; width:70px; font-size:1.5rem;">🔍</button>
             </div>
             <div id="theme-tmdb-results" class="tmdb-results"></div>
             
@@ -214,7 +218,7 @@
                 </div>
                 <div style="display:flex; gap:10px; margin-bottom: 15px;">
                     <input type="text" id="customTagTheme" placeholder="태그 직접 입력" style="margin:0; flex:1;">
-                    <button onclick="addCustomTag('theme')" style="background:#bbb; color:white; border-radius:20px;">추가</button>
+                    <button onclick="addCustomTag('theme')" style="background:#bbb; color:white; border-radius:20px; padding: 10px 20px;">추가</button>
                 </div>
                 <button class="btn-main" onclick="addWorkToTheme()">이 작품을 테마에 담기</button>
             </div>
@@ -225,41 +229,20 @@
             <div id="added-items-preview" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
         </div>
         
-        <button class="btn-main" style="background:#2ecc71" onclick="saveTheme()">테마 저장하기</button>
+        <button class="btn-main" style="background:#2ecc71" onclick="saveThemeSupabase()">테마 저장하기</button>
     </div>
 </div>
 
 <script>
-    // 전역 상태
-    let db = {};
+    // [설정] Supabase 정보 입력
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL'; 
+    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let db = {}; 
     let themes = [];
     let tempEntry = { actor: '', work: null, tags: [] };
     let tempThemeWorks = [];
-
-    // --- 데이터 동기화 (Vercel KV API 연결) ---
-    async function syncData() {
-        try {
-            const res = await fetch('/api/load');
-            const data = await res.json();
-            db = data.db || {};
-            themes = data.themes || [];
-            renderThemes();
-        } catch (e) {
-            console.error("데이터 로드 실패:", e);
-        }
-    }
-
-    async function serverSave(type, payload) {
-        try {
-            const res = await fetch('/api/save', {
-                method: 'POST',
-                body: JSON.stringify({ type, payload })
-            });
-            if (res.ok) await syncData();
-        } catch (e) {
-            console.error("저장 실패:", e);
-        }
-    }
 
     // --- 화면 제어 ---
     function goScreen(id) {
@@ -276,12 +259,78 @@
         document.getElementById('theme-tag-area').style.display = 'none';
     }
 
-    // --- 입덕 프로세스 ---
-    function startShout() {
-        resetInputs();
-        goScreen('screen-actor-search');
+    // --- 데이터 동기화 (Supabase) ---
+    async function initListPage() {
+        const { data, error } = await supabaseClient.from('fan_records').select('*').order('created_at', { ascending: true });
+        if (error) return console.error(error);
+
+        // 데이터 가공 (중복 합산 로직)
+        db = {};
+        data.forEach(r => {
+            if(!db[r.actor]) db[r.actor] = {};
+            if(!db[r.actor][r.work_title]) {
+                db[r.actor][r.work_title] = { count: 1, poster: r.poster_url, tags: r.tags };
+            } else {
+                db[r.actor][r.work_title].count++;
+                db[r.actor][r.work_title].tags = [...new Set([...db[r.actor][r.work_title].tags, ...r.tags])];
+            }
+        });
+
+        renderActorButtons();
+        goScreen('screen-list');
+        const actors = Object.keys(db);
+        if(actors.length > 0) showActorRecords(actors[0]);
     }
 
+    async function loadThemes() {
+        const { data, error } = await supabaseClient.from('fan_themes').select('*').order('created_at', { ascending: false });
+        if (!error) {
+            themes = data;
+            renderThemes();
+        }
+    }
+
+    // --- 저장 로직 ---
+    async function saveShout() {
+        const tags = Array.from(document.querySelectorAll('#tag-selector-work .selected')).map(t => t.innerText);
+        const { error } = await supabaseClient.from('fan_records').insert([
+            { 
+                actor: tempEntry.actor, 
+                work_title: tempEntry.work.title, 
+                poster_url: tempEntry.work.poster, 
+                tags: tags 
+            }
+        ]);
+
+        if (error) alert("저장 실패: " + error.message);
+        else {
+            alert("서버에 소중한 입덕작이 기록되었습니다! ✨");
+            initListPage();
+        }
+    }
+
+    async function saveThemeSupabase() {
+        const name = document.getElementById('themeNameInput').value.trim();
+        const editId = document.getElementById('editingThemeId').value;
+        if(!name || !tempThemeWorks.length) return alert("테마 이름과 작품을 채워주세요!");
+
+        const themeData = { 
+            id: editId || Date.now(), 
+            name: name, 
+            works: tempThemeWorks 
+        };
+
+        const { error } = await supabaseClient.from('fan_themes').upsert(themeData);
+        if (error) alert("테마 저장 실패: " + error.message);
+        else {
+            alert("테마가 저장되었습니다! 📂");
+            goScreen('screen-theme-list');
+            loadThemes();
+        }
+    }
+
+    // --- 기존 UI 핸들링 로직 유지 ---
+    function startShout() { resetInputs(); goScreen('screen-actor-search'); }
     function confirmActor() {
         const val = document.getElementById('actorInput').value.trim();
         if(!val) return;
@@ -294,13 +343,11 @@
     async function searchTMDB(type) {
         const query = type === 'work' ? document.getElementById('workSearchInput').value : document.getElementById('themeWorkSearch').value;
         if(!query) return;
-
         const res = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
         const data = await res.json();
         const areaId = type === 'work' ? 'tmdb-results' : 'theme-tmdb-results';
         const area = document.getElementById(areaId);
         area.innerHTML = "";
-        
         data.results?.forEach(item => {
             if(!item.poster_path) return;
             const title = item.title || item.name;
@@ -319,8 +366,7 @@
     }
 
     function toggleTag(el) {
-        const parent = el.parentElement;
-        const selected = parent.querySelectorAll('.selected');
+        const selected = el.parentElement.querySelectorAll('.selected');
         if(el.classList.contains('selected')) el.classList.remove('selected');
         else if(selected.length < 2) el.classList.add('selected');
         else alert("태그는 최대 2개까지 선택 가능해요!");
@@ -339,21 +385,10 @@
         input.value = "";
     }
 
-    async function saveShout() {
-        const tags = Array.from(document.querySelectorAll('#tag-selector-work .selected')).map(t => t.innerText);
-        await serverSave('SHOUT', { ...tempEntry, tags });
-        alert("서버에 소중한 입덕작이 기록되었습니다! ✨");
-        initListPage();
-    }
-
-    // --- 리스트 및 테마 렌더링 ---
-    async function initListPage() {
-        await syncData();
+    function renderActorButtons() {
         const actors = Object.keys(db);
-        const btnArea = document.getElementById('actor-buttons');
-        btnArea.innerHTML = actors.map(a => `<button onclick="showActorRecords('${a}')" style="background:white; border:2px solid var(--main); color:var(--main); margin-right:10px; white-space:nowrap;">${a}</button>`).join('');
-        goScreen('screen-list');
-        if(actors.length > 0) showActorRecords(actors[0]);
+        const area = document.getElementById('actor-buttons');
+        area.innerHTML = actors.map(a => `<button onclick="showActorRecords('${a}')" style="background:white; border:2px solid var(--main); color:var(--main); margin-right:10px; white-space:nowrap; padding: 10px 20px;">${a}</button>`).join('');
     }
 
     function showActorRecords(actor) {
@@ -395,7 +430,6 @@
         `).join('');
     }
 
-    // 테마 CRUD
     function openThemeWrite() {
         resetInputs();
         tempThemeWorks = [];
@@ -416,18 +450,7 @@
 
     function renderThemePreview() {
         const area = document.getElementById('added-items-preview');
-        area.innerHTML = tempThemeWorks.map((w, idx) => `<button onclick="tempThemeWorks.splice(${idx},1); renderThemePreview();" style="background:#eee; color:#666; font-size:0.8rem; padding:8px 15px;">${w.title} ✕</button>`).join('');
-    }
-
-    async function saveTheme() {
-        const name = document.getElementById('themeNameInput').value.trim();
-        const editId = document.getElementById('editingThemeId').value;
-        if(!name || !tempThemeWorks.length) return alert("테마 이름과 작품을 채워주세요!");
-        
-        const themeData = { name, works: tempThemeWorks, id: editId || Date.now() };
-        await serverSave('THEME_SAVE', { themeData });
-        alert("테마가 저장되었습니다! 📂");
-        goScreen('screen-theme-list');
+        area.innerHTML = tempThemeWorks.map((w, idx) => `<button onclick="tempThemeWorks.splice(${idx},1); renderThemePreview();" style="background:#eee; color:#666; font-size:0.8rem; padding:8px 15px; margin-right:5px;">${w.title} ✕</button>`).join('');
     }
 
     function editTheme(id) {
@@ -442,7 +465,7 @@
     }
 
     // 초기 실행
-    window.onload = syncData;
+    window.onload = loadThemes;
 </script>
 </body>
 </html>
