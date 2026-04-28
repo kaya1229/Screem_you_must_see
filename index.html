@@ -8,9 +8,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Nanum+Square+Round:wght@400;700;800&family=Nanum+Pen+Script&display=swap');
 
         :root { 
-            --main: #78a2cc; /* 차분한 수납함 블루 */
-            --sub: #e59a8a;  /* 바랜 코랄/서류봉투 색 */
-            --bg: #f4f4f2;   /* 아카이브실 배경색 */
+            --main: #78a2cc; 
+            --sub: #e59a8a;  
+            --bg: #f4f4f2;   
             --paper: #ffffff; 
             --text: #444;
             --handwriting: 'Nanum Pen Script', cursive;
@@ -24,43 +24,43 @@
             line-height: 1.6; 
         }
 
-        /* 전체 컨테이너를 서류첩처럼 디자인 */
         .app-container { 
             width: 100%; 
-            max-width: 800px; 
-            margin: 40px auto; 
-            min-height: 90vh; 
+            max-width: 850px; 
+            margin: 60px auto; 
+            min-height: 85vh; 
             background: var(--paper); 
             padding: 50px 30px; 
             box-sizing: border-box; 
-            box-shadow: 10px 10px 0px rgba(0,0,0,0.05); /* 아날로그적인 딱딱한 그림자 */
+            box-shadow: 15px 15px 0px rgba(0,0,0,0.03);
             border: 1px solid #ddd;
             position: relative;
         }
 
-        /* 상단 인덱스 탭 디자인 */
+        /* 상단 인덱스 탭 */
         .tab-menu {
             display: flex;
             gap: 5px;
             position: absolute;
-            top: -40px;
+            top: -45px;
             left: 20px;
         }
         .tab-btn {
-            padding: 10px 25px;
+            padding: 12px 28px;
             background: #d1d1cf;
             border-radius: 12px 12px 0 0;
             border: 1px solid #bbb;
             border-bottom: none;
             cursor: pointer;
             font-weight: 700;
-            color: #666;
+            color: #777;
             transition: 0.3s;
+            font-size: 0.95rem;
         }
         .tab-btn.active {
             background: var(--paper);
             color: var(--main);
-            height: 45px;
+            height: 50px;
             margin-top: -5px;
             z-index: 2;
         }
@@ -69,12 +69,12 @@
         .screen.active { display: block; }
 
         @keyframes drawerOpen { 
-            from { opacity: 0; transform: translateY(20px) scale(0.98); } 
-            to { opacity: 1; transform: translateY(0) scale(1); } 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
         }
 
-        h1 { font-weight: 800; font-size: 2.2rem; color: var(--main); text-align: center; margin-bottom: 40px; letter-spacing: -1px; }
-        h2 { font-weight: 800; font-size: 1.5rem; margin-bottom: 20px; border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
+        h1 { font-weight: 800; font-size: 2.2rem; color: var(--main); text-align: center; margin-bottom: 40px; }
+        h2 { font-weight: 800; font-size: 1.5rem; margin-bottom: 25px; border-bottom: 1px dashed #ccc; padding-bottom: 10px; }
 
         button { padding: 15px 25px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.3s; font-family: 'Nanum Square Round'; }
         .btn-main { background: var(--main); color: white; width: 100%; }
@@ -83,84 +83,118 @@
 
         input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; background: #fafafa; }
 
-        /* 폴라로이드 스타일의 기록 카드 */
-        .record-cloud { display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; padding: 20px 0; }
-        .cloud-item { 
-            background: white;
-            padding: 15px 15px 40px 15px;
-            box-shadow: 5px 5px 15px rgba(0,0,0,0.08);
+        /* --- 티켓 스타일 기록 카드 --- */
+        .record-cloud { display: flex; flex-direction: column; gap: 20px; padding: 20px 0; }
+        .ticket-item { 
+            display: flex;
+            background: #fff;
             border: 1px solid #eee;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.05);
             position: relative;
             transition: 0.3s;
-            text-align: center;
+            height: 140px;
         }
-        .cloud-item:nth-child(even) { transform: rotate(1.5deg); }
-        .cloud-item:nth-child(odd) { transform: rotate(-1.5deg); }
-        .cloud-item img { display: block; margin-bottom: 15px; border: 1px solid #f9f9f9; }
-        .cloud-item .badge { 
-            position: absolute; top: -10px; right: -10px; 
-            background: var(--sub); color: white; border-radius: 50%; 
-            width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; 
-            font-weight: 800; border: 3px solid white; z-index: 10; 
+        .ticket-item:hover { transform: translateX(5px); }
+        
+        /* 티켓 왼쪽 (포스터 구역) */
+        .ticket-left {
+            width: 100px;
+            flex-shrink: 0;
+            background: #eee;
+            position: relative;
         }
-        .cloud-item .handwriting { font-family: var(--handwriting); font-size: 1.4rem; color: #555; }
+        .ticket-left img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* 티켓 스타일의 테마 카드 */
+        /* 티켓 중간 (정보 구역) */
+        .ticket-main {
+            flex-grow: 1;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-left: 2px dashed #eee;
+            position: relative;
+        }
+        
+        /* 티켓 절취선 홈 (위아래 반원) */
+        .ticket-main::before, .ticket-main::after {
+            content: ""; position: absolute; left: -11px;
+            width: 20px; height: 20px; background: var(--paper); border: 1px solid #eee; border-radius: 50%; z-index: 5;
+        }
+        .ticket-main::before { top: -11px; }
+        .ticket-main::after { bottom: -11px; }
+
+        .ticket-title { font-size: 1.3rem; font-weight: 800; color: #333; margin-bottom: 5px; }
+        .ticket-actor { font-family: var(--handwriting); font-size: 1.4rem; color: var(--main); }
+        .ticket-tags { font-size: 0.85rem; color: #999; margin-top: 8px; }
+
+        /* 티켓 오른쪽 (카운트 구역) */
+        .ticket-right {
+            width: 70px;
+            background: #fdfbff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-left: 1px solid #f0f0f0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--sub);
+        }
+
+        /* 테마 카드 (티켓 스타일 유지) */
         .theme-card { 
-            background: #fffef0; /* 오래된 종이색 */
-            padding: 25px; 
-            border-radius: 15px; 
-            margin-bottom: 25px; 
-            border-left: 8px solid var(--main); 
-            position: relative; 
+            background: #fffef0; 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 20px; 
+            border-left: 10px solid var(--main); 
             border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.02);
-        }
-        .theme-card::after { /* 티켓 절취선 원형 홈 */
-            content: ""; position: absolute; left: -14px; top: 50%; transform: translateY(-50%);
-            width: 20px; height: 20px; background: var(--paper); border-radius: 50%; border: 1px solid #eee;
+            position: relative;
         }
 
-        .tmdb-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .tmdb-item { border-radius: 10px; overflow: hidden; background: white; cursor: pointer; border: 3px solid transparent; }
-        .tmdb-item.selected { border-color: var(--sub); }
+        .tmdb-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
+        .tmdb-item { border-radius: 8px; overflow: hidden; background: white; cursor: pointer; border: 3px solid transparent; transition: 0.2s; }
+        .tmdb-item.selected { border-color: var(--sub); transform: translateY(-5px); }
         .tmdb-item img { width: 100%; display: block; }
 
-        .tag-chip { padding: 8px 15px; border: 1px solid #ddd; border-radius: 20px; font-size: 0.85rem; cursor: pointer; background: white; }
+        .tag-chip { padding: 8px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 0.85rem; cursor: pointer; background: white; transition: 0.2s; }
         .tag-chip.selected { background: var(--main); color: white; border-color: var(--main); }
-        .horizontal-scroll { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; }
+        .horizontal-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .horizontal-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="tab-menu">
-        <div class="tab-btn active" onclick="goScreen('screen-main')">홈</div>
-        <div class="tab-btn" onclick="initListPage()">입덕 수납함</div>
-        <div class="tab-btn" onclick="loadThemes()">추천 목록</div>
+        <div class="tab-btn active" onclick="goScreen('screen-main')">HOME</div>
+        <div class="tab-btn" onclick="initListPage()">수납함</div>
+        <div class="tab-btn" onclick="loadThemes()">테마</div>
     </div>
 
     <div id="screen-main" class="screen active">
-        <h1>📦 덕크의 수납함</h1>
-        <p style="text-align: center; color: #888; margin-top: -30px; margin-bottom: 40px;">당신의 소중한 덕질 기록을 차곡차곡</p>
+        <h1>🗄️ 덕질 수납함</h1>
+        <p style="text-align: center; font-family: var(--handwriting); font-size: 1.6rem; color: #666; margin-top: -30px; margin-bottom: 50px;">하나씩 꺼내보는 나의 입덕 조각들</p>
         <div style="display: grid; gap: 15px; max-width: 320px; margin: 0 auto;">
-            <button class="btn-main" onclick="initListPage()">📂 기록 확인하기</button>
-            <button class="btn-gray" onclick="startShout()">✏️ 새로 기록하기</button>
+            <button class="btn-main" onclick="initListPage()">📂 수납함 열기</button>
+            <button class="btn-gray" onclick="startShout()">✏️ 새 기록 보관</button>
         </div>
     </div>
 
     <div id="screen-list" class="screen">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <h2>🎞️ 나의 입덕 컬렉션</h2>
-            <button class="btn-sub" onclick="startShout()" style="padding: 10px 15px;">추가 +</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h2>🎞️ COLLECTED TICKETS</h2>
+            <button class="btn-sub" onclick="startShout()" style="padding: 10px 18px; font-size: 0.9rem;">+ ADD</button>
         </div>
-        <div id="actor-buttons" class="horizontal-scroll" style="margin-bottom: 20px;"></div>
+        <div id="actor-buttons" class="horizontal-scroll" style="margin-bottom: 25px;"></div>
         <div id="record-display" class="record-cloud"></div>
     </div>
 
     <div id="screen-actor-search" class="screen">
         <h2>누구에게 입덕했나요?</h2>
-        <input type="text" id="actorInput" placeholder="배우/아티스트 이름 입력">
+        <input type="text" id="actorInput" placeholder="이름을 입력하세요">
         <button class="btn-main" onclick="confirmActor()">다음 서류로</button>
     </div>
 
@@ -168,46 +202,46 @@
         <h2 id="current-target" style="color: var(--main);"></h2>
         <div style="display:flex; gap:10px;">
             <input type="text" id="workSearchInput" placeholder="작품명 검색" style="margin:0;">
-            <button onclick="searchTMDB('work')" style="background:var(--text); color:white; width:60px;">🔍</button>
+            <button onclick="searchTMDB('work')" style="background:var(--text); color:white; width:60px; border-radius:8px;">🔍</button>
         </div>
         <div id="tmdb-results" class="tmdb-results" style="margin-top:20px;"></div>
         
-        <div id="tag-area" style="display:none; background:#fdfdfd; padding:20px; border:1px dashed var(--main); margin-top:20px; border-radius:10px;">
-            <p style="font-weight: 800;">어떤 포인트에 반했나요? (최대 2개)</p>
-            <div class="tag-selector" id="tag-selector-work" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:15px;">
+        <div id="tag-area" style="display:none; background:#fdfdfd; padding:25px; border:1px dashed var(--main); margin-top:20px; border-radius:12px;">
+            <p style="font-weight: 800; margin-top:0;">어떤 포인트에 반했나요? (최대 2개)</p>
+            <div class="tag-selector" id="tag-selector-work" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
                 <div class="tag-chip" onclick="toggleTag(this)">#눈빛맛집</div>
                 <div class="tag-chip" onclick="toggleTag(this)">#서사천재</div>
                 <div class="tag-chip" onclick="toggleTag(this)">#비주얼</div>
                 <div class="tag-chip" onclick="toggleTag(this)">#연기력</div>
+                <div class="tag-chip" onclick="toggleTag(this)">#케미요정</div>
             </div>
-            <button class="btn-main" style="background:var(--sub)" onclick="saveShout()">수납함에 저장 ✨</button>
+            <button class="btn-main" style="background:var(--sub)" onclick="saveShout()">수납함에 보관하기 ✨</button>
         </div>
     </div>
 
     <div id="screen-theme-list" class="screen">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2>🔖 테마별 기록장</h2>
-            <button onclick="openThemeWrite()" class="btn-sub" style="padding:10px 20px;">새 테마</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+            <h2>🔖 THEME ARCHIVE</h2>
+            <button onclick="openThemeWrite()" class="btn-sub" style="padding:10px 18px; font-size:0.9rem;">NEW</button>
         </div>
         <div id="theme-display-area"></div>
     </div>
 
     <div id="screen-theme-write" class="screen">
-        <h2 id="theme-write-title">새 테마 만들기</h2>
-        <input type="hidden" id="editingThemeId" value="">
-        <input type="text" id="themeNameInput" placeholder="테마 제목 (예: 우울할 때 치료제)">
+        <h2>새 테마 만들기</h2>
+        <input type="text" id="themeNameInput" placeholder="테마 제목 (예: 가을 밤, 고독한 기분)">
         <div style="background:#f9f9f9; padding:20px; border-radius:10px; margin-bottom:20px;">
             <div style="display:flex; gap:10px;">
                 <input type="text" id="themeWorkSearch" placeholder="작품 검색" style="margin:0;">
-                <button onclick="searchTMDB('theme')" style="background:var(--text); color:white; width:60px;">🔍</button>
+                <button onclick="searchTMDB('theme')" style="background:var(--text); color:white; width:60px; border-radius:8px;">🔍</button>
             </div>
             <div id="theme-tmdb-results" class="tmdb-results" style="margin-top:15px;"></div>
             <div id="theme-tag-area" style="display:none; margin-top:15px;">
-                <button class="btn-main" onclick="addWorkToTheme()">이 작품을 테마에 추가</button>
+                <button class="btn-main" onclick="addWorkToTheme()">이 작품 추가</button>
             </div>
         </div>
         <div id="added-items-preview" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;"></div>
-        <button class="btn-main" style="background:#2ecc71" onclick="saveTheme()">테마 수납 완료</button>
+        <button class="btn-main" style="background:#2ecc71" onclick="saveTheme()">테마 저장</button>
     </div>
 </div>
 
@@ -221,11 +255,10 @@
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         
-        // 탭 활성화 UI 처리
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         if(id === 'screen-main') document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        if(id === 'screen-list') document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        if(id === 'screen-theme-list') document.querySelectorAll('.tab-btn')[2].classList.add('active');
+        if(id === 'screen-list' || id === 'screen-actor-search' || id === 'screen-work-search') document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        if(id === 'screen-theme-list' || id === 'screen-theme-write') document.querySelectorAll('.tab-btn')[2].classList.add('active');
         window.scrollTo(0,0);
     }
 
@@ -237,11 +270,10 @@
         if(document.getElementById('theme-tag-area')) document.getElementById('theme-tag-area').style.display = 'none';
     }
 
-    // --- API 통신 (우리가 이전에 정리한 구조 기준) ---
     async function initListPage() {
         goScreen('screen-list');
         try {
-const res = await fetch('/api/proxy?type=records');
+            const res = await fetch('/api/proxy?type=records'); 
             const data = await res.json();
             db = {};
             data.forEach(r => {
@@ -263,26 +295,27 @@ const res = await fetch('/api/proxy?type=records');
         const payload = { actor: tempEntry.actor, work_title: tempEntry.work.title, poster_url: tempEntry.work.poster, tags };
         
         const res = await fetch('/api/proxy?type=records', {
-    method: 'POST',
-    body: JSON.stringify(payload)
-});
-        if(res.ok) { alert("기록이 수납되었습니다! 📦"); initListPage(); }
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        if(res.ok) { alert("기록이 수납함에 보관되었습니다! 📦"); initListPage(); }
     }
 
     async function loadThemes() {
         goScreen('screen-theme-list');
-const res = await fetch('/api/proxy?type=themes');
-        themes = await res.json();
-        renderThemes();
+        try {
+            const res = await fetch('/api/proxy?type=themes');
+            themes = await res.json();
+            renderThemes();
+        } catch(e) { console.error(e); }
     }
 
-    // --- 검색 및 UI 제어 ---
     function startShout() { resetInputs(); goScreen('screen-actor-search'); }
     function confirmActor() {
         const val = document.getElementById('actorInput').value.trim();
         if(!val) return;
         tempEntry.actor = val;
-        document.getElementById('current-target').innerText = `✨ ${val} 배우님 기록`;
+        document.getElementById('current-target').innerText = `✨ ${val} 배우님 기록 중`;
         goScreen('screen-work-search');
     }
 
@@ -299,7 +332,7 @@ const res = await fetch('/api/proxy?type=themes');
             const poster = `https://image.tmdb.org/t/p/w400${item.poster_path}`;
             const div = document.createElement('div');
             div.className = 'tmdb-item';
-            div.innerHTML = `<img src="${poster}"><p style="font-size:0.8rem; padding:5px; text-align:center;">${title}</p>`;
+            div.innerHTML = `<img src="${poster}"><p style="font-size:0.75rem; padding:5px; text-align:center; font-weight:700;">${title}</p>`;
             div.onclick = () => {
                 tempEntry.work = { title, poster };
                 document.querySelectorAll(`#${areaId} .tmdb-item`).forEach(i => i.classList.remove('selected'));
@@ -318,7 +351,7 @@ const res = await fetch('/api/proxy?type=themes');
 
     function renderActorButtons() {
         const actors = Object.keys(db);
-        document.getElementById('actor-buttons').innerHTML = actors.map(a => `<button onclick="showActorRecords('${a}')" style="background:white; border:1px solid var(--main); color:var(--main); white-space:nowrap; padding: 8px 15px;">${a}</button>`).join('');
+        document.getElementById('actor-buttons').innerHTML = actors.map(a => `<button onclick="showActorRecords('${a}')" style="background:white; border:1.5px solid var(--main); color:var(--main); white-space:nowrap; padding: 10px 20px; border-radius:20px;">${a}</button>`).join('');
     }
 
     function showActorRecords(actor) {
@@ -327,13 +360,19 @@ const res = await fetch('/api/proxy?type=themes');
         display.innerHTML = "";
         Object.keys(records).forEach(title => {
             const data = records[title];
-            const size = Math.min(150 + (data.count - 1) * 30, 250);
             display.innerHTML += `
-                <div class="cloud-item">
-                    <div class="badge">${data.count}</div>
-                    <img src="${data.poster}" style="width:${size}px;">
-                    <div class="handwriting">${title}</div>
-                    <div style="font-size:0.75rem; color:var(--main);">${data.tags.join(' ')}</div>
+                <div class="ticket-item">
+                    <div class="ticket-left">
+                        <img src="${data.poster}">
+                    </div>
+                    <div class="ticket-main">
+                        <div class="ticket-title">${title}</div>
+                        <div class="ticket-actor">${actor}</div>
+                        <div class="ticket-tags">${data.tags.join(' ')}</div>
+                    </div>
+                    <div class="ticket-right">
+                        ${data.count}
+                    </div>
                 </div>`;
         });
     }
@@ -342,9 +381,9 @@ const res = await fetch('/api/proxy?type=themes');
         const area = document.getElementById('theme-display-area');
         area.innerHTML = themes.map(t => `
             <div class="theme-card">
-                <h3 style="margin-top:0; color:var(--main);"># ${t.name}</h3>
+                <h3 style="margin-top:0; color:var(--main); font-size:1.1rem;"># ${t.name}</h3>
                 <div class="horizontal-scroll">
-                    ${t.works.map(w => `<div style="width:90px; flex-shrink:0;"><img src="${w.poster}" style="width:100%; border-radius:5px;"><p style="font-size:0.7rem; font-weight:800;">${w.title}</p></div>`).join('')}
+                    ${t.works.map(w => `<div style="width:100px; flex-shrink:0;"><img src="${w.poster}" style="width:100%; border-radius:6px; box-shadow:2px 2px 5px rgba(0,0,0,0.1);"><p style="font-size:0.7rem; font-weight:800; margin-top:5px; text-align:center;">${w.title}</p></div>`).join('')}
                 </div>
             </div>`).join('');
     }
@@ -352,7 +391,15 @@ const res = await fetch('/api/proxy?type=themes');
     function openThemeWrite() { resetInputs(); tempThemeWorks = []; goScreen('screen-theme-write'); }
     function addWorkToTheme() {
         tempThemeWorks.push({ ...tempEntry.work });
-        document.getElementById('added-items-preview').innerHTML = tempThemeWorks.map((w, idx) => `<span style="background:#eee; padding:5px 10px; border-radius:5px; font-size:0.8rem;">${w.title}</span>`).join('');
+        document.getElementById('added-items-preview').innerHTML = tempThemeWorks.map((w, idx) => `<span style="background:var(--bg); padding:8px 12px; border-radius:8px; font-size:0.85rem; font-weight:700;">${w.title}</span>`).join('');
+    }
+
+    async function saveTheme() {
+        const name = document.getElementById('themeNameInput').value.trim();
+        if(!name || !tempThemeWorks.length) return alert("테마 이름과 작품을 추가해주세요!");
+        const payload = { id: Date.now(), name, works: tempThemeWorks };
+        const res = await fetch('/api/proxy?type=themes', { method: 'POST', body: JSON.stringify(payload) });
+        if(res.ok) { alert("테마가 저장되었습니다! 🔖"); loadThemes(); }
     }
 </script>
 </body>
