@@ -241,7 +241,7 @@
     async function initListPage() {
         goScreen('screen-list');
         try {
-            const res = await fetch('/api/load'); // proxy 대신 load.js 사용 권장
+const res = await fetch('/api/proxy?type=records');
             const data = await res.json();
             db = {};
             data.forEach(r => {
@@ -262,16 +262,16 @@
         const tags = Array.from(document.querySelectorAll('#tag-selector-work .selected')).map(t => t.innerText);
         const payload = { actor: tempEntry.actor, work_title: tempEntry.work.title, poster_url: tempEntry.work.poster, tags };
         
-        const res = await fetch('/api/save', { // save.js 사용 권장
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+        const res = await fetch('/api/proxy?type=records', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+});
         if(res.ok) { alert("기록이 수납되었습니다! 📦"); initListPage(); }
     }
 
     async function loadThemes() {
         goScreen('screen-theme-list');
-        const res = await fetch('/api/load-themes'); // 테마 로드 API
+const res = await fetch('/api/proxy?type=themes');
         themes = await res.json();
         renderThemes();
     }
