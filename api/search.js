@@ -1,7 +1,7 @@
 // api/search.js
 export default async function handler(req, res) {
   const { query } = req.query;
-  const API_KEY = process.env.TMDB_API_KEY; // Vercel 설정에서 가져올 키값
+  const API_KEY = process.env.tmdb_key; // Vercel 설정에서 가져올 키값
 
   const url = `https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=ko-KR`;
 
