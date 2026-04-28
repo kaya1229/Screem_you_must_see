@@ -24,27 +24,29 @@
         .btn-main { background: var(--main); color: white; width: 100%; }
         input { width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
 
-        /* [수납함] 검색 및 티켓 그리드 */
-        .search-bar { border: 2px solid var(--main); border-radius: 30px; margin-bottom: 20px; }
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .search-bar { border: 2px solid var(--main); border-radius: 30px; margin-bottom: 15px; }
         .actor-tag { background: white; border: 1px solid #ddd; padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; display: inline-block; margin: 2px; }
+        .actor-tag.selected { background: var(--main); color: white; border-color: var(--main); }
+        
         .record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 25px; margin-top: 20px; }
         .ticket { background: #fff; border: 1px solid #eee; border-radius: 10px; overflow: hidden; box-shadow: 5px 5px 15px rgba(0,0,0,0.05); text-align: center; }
         .ticket img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-bottom: 2px dashed #eee; }
-        .ticket-tags { font-family: var(--handwriting); font-size: 1.1rem; color: var(--main); margin: 5px 0; }
+        .ticket-tags { font-family: var(--handwriting); font-size: 1.1rem; color: var(--main); margin: 5px 0; min-height: 1.2em; }
 
-        /* [테마] 복구된 격자 스타일 */
         .theme-card { background: #fffef0; padding: 25px; border-radius: 15px; margin-bottom: 30px; border: 1px solid #eee; }
         .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; }
         .theme-poster-box { text-align: center; }
         .theme-poster-box img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 8px; box-shadow: 3px 3px 10px rgba(0,0,0,0.1); }
         .theme-work-tags { font-family: var(--handwriting); font-size: 1rem; color: var(--main); }
 
-        /* TMDB 결과 */
         .tmdb-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
         .tmdb-item { cursor: pointer; border-radius: 8px; overflow: hidden; border: 3px solid transparent; text-align: center; font-size: 0.7rem; }
         .tmdb-item.selected { border-color: var(--sub); }
         .tmdb-item img { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
         .preview-box { display: flex; justify-content: space-between; padding: 10px; background: #f9f9f9; border-radius: 8px; margin-bottom: 5px; }
+        
+        .tag-input-style { border: none; border-bottom: 2px solid var(--main); border-radius: 0; padding: 5px; margin: 0; width: 150px; }
     </style>
 </head>
 <body>
@@ -60,11 +62,15 @@
         <h1>🗄️ 덕질 수납함</h1>
         <div style="max-width:300px; margin: 40px auto; display:grid; gap:12px;">
             <button class="btn-main" onclick="initListPage()">📂 수납함 열기</button>
-            <button class="btn-main" style="background:var(--sub)" onclick="goScreen('screen-actor-search')">✏️ 신규 입덕 보관</button>
+            <button class="btn-main" style="background:var(--sub)" onclick="startAddRecord()">✏️ 신규 입덕 보관</button>
         </div>
     </div>
 
     <div id="screen-list" class="screen">
+        <div class="list-header">
+            <h2 style="border:none; margin:0;">🎞️ ACTOR INDEX</h2>
+            <button onclick="startAddRecord()" style="background:var(--sub); color:white; padding:6px 15px; font-size:0.8rem;">+ 티켓 추가</button>
+        </div>
         <input type="text" id="actorSearchInput" class="search-bar" placeholder="배우 또는 작품명 검색..." onkeyup="filterRecords()">
         <div id="actor-index-bar"></div>
         <div id="record-display" class="record-grid"></div>
@@ -88,12 +94,12 @@
             </div>
             <div id="theme-tmdb-results" class="tmdb-results" style="margin-top:10px;"></div>
             <div id="theme-item-detail" style="display:none; margin-top:10px;">
-                <input type="text" id="themeItemTag" placeholder="#테마용 태그">
-                <button class="btn-main" onclick="addWorkToTheme()" style="background:var(--sub)">추가</button>
+                <input type="text" id="themeItemTag" placeholder="#테마용 태그 (엔터로 추가)" onkeypress="if(event.keyCode==13) addWorkToTheme()">
+                <button class="btn-main" onclick="addWorkToTheme()" style="background:var(--sub)">테마에 추가</button>
             </div>
         </div>
         <div id="added-items-preview"></div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
             <button class="btn-main" style="background:var(--danger)" onclick="deleteTheme()">테마 삭제</button>
             <button class="btn-main" style="background:#2ecc71" onclick="saveTheme()">테마 저장</button>
         </div>
@@ -113,11 +119,13 @@
         </div>
         <div id="tmdb-results" class="tmdb-results"></div>
         <div id="tag-section" style="display:none; margin-top:20px;">
+            <p style="font-weight:800; margin-bottom:10px;">입덕 포인트 (직접 입력 후 엔터)</p>
             <div id="tag-pool" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:15px;">
-                <span class="actor-tag" onclick="toggleTag(this)">#눈빛맛집</span>
-                <span class="actor-tag" onclick="toggleTag(this)">#서사천재</span>
-                <span class="actor-tag" onclick="toggleTag(this)">#비주얼</span>
-                <span class="actor-tag" onclick="toggleTag(this)">#연기력</span>
+                <span class="actor-tag" onclick="this.classList.toggle('selected')">#눈빛맛집</span>
+                <span class="actor-tag" onclick="this.classList.toggle('selected')">#서사천재</span>
+                <span class="actor-tag" onclick="this.classList.toggle('selected')">#비주얼</span>
+                <span class="actor-tag" onclick="this.classList.toggle('selected')">#연기력</span>
+                <input type="text" id="customTagInput" class="tag-input-style" placeholder="#직접입력" onkeypress="handleCustomTag(event)">
             </div>
             <button class="btn-main" onclick="saveRecord()">수납 완료</button>
         </div>
@@ -131,12 +139,12 @@
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        if(id === 'screen-list') document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        if(id === 'screen-theme-list') document.querySelectorAll('.tab-btn')[2].classList.add('active');
+        if(['screen-list', 'screen-actor-search', 'screen-work-search'].includes(id)) document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        if(['screen-theme-list', 'screen-theme-write'].includes(id)) document.querySelectorAll('.tab-btn')[2].classList.add('active');
+        if(id === 'screen-main') document.querySelectorAll('.tab-btn')[0].classList.add('active');
     }
 
     async function refreshDB() { const res = await fetch('/api/proxy?type=records'); db = await res.json(); }
-
     async function initListPage() { goScreen('screen-list'); await refreshDB(); renderList(db); }
 
     function renderList(items) {
@@ -149,7 +157,7 @@
                 <img src="${r.poster_url}">
                 <div style="padding:15px;">
                     <div style="font-size:0.75rem; color:var(--sub); font-weight:800;">${r.actor}</div>
-                    <div style="font-weight:800; margin:5px 0;">${r.work_title}</div>
+                    <div style="font-weight:800; margin:5px 0; height:2.4em; overflow:hidden; line-height:1.2;">${r.work_title}</div>
                     <div class="ticket-tags">${(r.tags||[]).join(' ')}</div>
                     <button onclick="deleteRecord('${r.id}')" style="background:none; border:none; color:var(--danger); text-decoration:underline; font-size:0.7rem; cursor:pointer;">삭제</button>
                 </div>
@@ -162,10 +170,65 @@
     }
     function setSearch(name) { document.getElementById('actorSearchInput').value = name; filterRecords(); }
 
+    function handleCustomTag(e) {
+        if(e.keyCode === 13) {
+            const val = e.target.value.trim();
+            if(!val) return;
+            const tag = document.createElement('span');
+            tag.className = 'actor-tag selected';
+            tag.innerText = val.startsWith('#') ? val : '#' + val;
+            tag.onclick = function() { this.remove(); };
+            document.getElementById('tag-pool').insertBefore(tag, e.target);
+            e.target.value = '';
+        }
+    }
+
+    function startAddRecord() {
+        document.getElementById('actorInput').value = "";
+        document.getElementById('workSearchInput').value = "";
+        document.getElementById('tmdb-results').innerHTML = "";
+        document.getElementById('tag-section').style.display = "none";
+        goScreen('screen-actor-search');
+    }
+
     async function deleteRecord(id) {
         if(!confirm("기록을 삭제할까요?")) return;
         await fetch(`/api/proxy?type=records&id=${id}`, { method: 'DELETE' });
         await refreshDB(); renderList(db);
+    }
+
+    async function searchTMDB(type) {
+        const q = (type === 'work') ? document.getElementById('workSearchInput').value : document.getElementById('themeWorkSearch').value;
+        const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`); const data = await res.json();
+        const area = document.getElementById(type === 'work' ? 'tmdb-results' : 'theme-tmdb-results');
+        area.innerHTML = data.results?.map(item => {
+            const title = (item.title || item.name).replace(/'/g, "");
+            const poster = `https://image.tmdb.org/t/p/w400${item.poster_path}`;
+            return `<div class="tmdb-item" onclick="selectWork('${title}', '${poster}', this, '${type}')"><img src="${poster}"><p>${title}</p></div>`;
+        }).join('');
+    }
+
+    function selectWork(title, poster, el, type) {
+        tempEntry.work = { title, poster };
+        document.querySelectorAll(`#${el.parentElement.id} .tmdb-item`).forEach(i => i.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById(type === 'work' ? 'tag-section' : 'theme-item-detail').style.display = 'block';
+    }
+
+    /* --- 테마 로직 --- */
+    function addWorkToTheme() {
+        const tagVal = document.getElementById('themeItemTag').value.trim();
+        const tags = tagVal ? (tagVal.startsWith('#') ? tagVal : '#' + tagVal) : "";
+        tempThemeWorks.push({...tempEntry.work, tags});
+        renderThemePreview(); document.getElementById('themeItemTag').value = "";
+    }
+
+    function renderThemePreview() {
+        document.getElementById('added-items-preview').innerHTML = tempThemeWorks.map((w, i) => `
+            <div class="preview-box">
+                <span><b>${w.title}</b> <small>${w.tags||""}</small></span>
+                <span style="color:var(--danger); cursor:pointer;" onclick="tempThemeWorks.splice(${i},1); renderThemePreview();">✖</span>
+            </div>`).join('');
     }
 
     async function loadThemes() {
@@ -194,37 +257,6 @@
         goScreen('screen-theme-write');
     }
 
-    async function searchTMDB(type) {
-        const q = (type === 'work') ? document.getElementById('workSearchInput').value : document.getElementById('themeWorkSearch').value;
-        const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`); const data = await res.json();
-        const area = document.getElementById(type === 'work' ? 'tmdb-results' : 'theme-tmdb-results');
-        area.innerHTML = data.results?.map(item => {
-            const title = (item.title || item.name).replace(/'/g, "");
-            const poster = `https://image.tmdb.org/t/p/w400${item.poster_path}`;
-            return `<div class="tmdb-item" onclick="selectWork('${title}', '${poster}', this, '${type}')"><img src="${poster}"><p>${title}</p></div>`;
-        }).join('');
-    }
-
-    function selectWork(title, poster, el, type) {
-        tempEntry.work = { title, poster };
-        document.querySelectorAll(`#${el.parentElement.id} .tmdb-item`).forEach(i => i.classList.remove('selected'));
-        el.classList.add('selected');
-        document.getElementById(type === 'work' ? 'tag-section' : 'theme-item-detail').style.display = 'block';
-    }
-
-    function addWorkToTheme() {
-        const tags = document.getElementById('themeItemTag').value; tempThemeWorks.push({...tempEntry.work, tags});
-        renderThemePreview(); document.getElementById('themeItemTag').value = "";
-    }
-
-    function renderThemePreview() {
-        document.getElementById('added-items-preview').innerHTML = tempThemeWorks.map((w, i) => `
-            <div class="preview-box">
-                <span><b>${w.title}</b> <small>${w.tags||""}</small></span>
-                <span style="color:var(--danger); cursor:pointer;" onclick="tempThemeWorks.splice(${i},1); renderThemePreview();">✖</span>
-            </div>`).join('');
-    }
-
     async function editTheme(id) {
         const t = themes.find(x => x.id == id); tempThemeWorks = [...t.works];
         document.getElementById('editingThemeId').value = t.id; document.getElementById('themeNameInput').value = t.name;
@@ -243,7 +275,7 @@
     }
 
     function confirmActor() { tempEntry.actor = document.getElementById('actorInput').value; document.getElementById('search-title').innerText = `${tempEntry.actor} 님의 입덕작`; goScreen('screen-work-search'); }
-    function toggleTag(el) { el.classList.toggle('selected'); el.style.background = el.classList.contains('selected') ? 'var(--main)' : 'white'; el.style.color = el.classList.contains('selected') ? 'white' : '#777'; }
+
     async function saveRecord() {
         const tags = Array.from(document.querySelectorAll('#tag-pool .selected')).map(el => el.innerText);
         const existing = db.find(r => r.actor === tempEntry.actor);
